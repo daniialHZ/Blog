@@ -11,25 +11,29 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Users table
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
+            $table->increments('id');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
+            $table->string('first_name');
+            $table->string('last_name');
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
         });
 
+        // Password reset tokens table
         Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
+            $table->string('email')->index(); // Use index on email
             $table->string('token');
             $table->timestamp('created_at')->nullable();
+            $table->unique('token'); // Ensure token is unique
         });
 
+        // Sessions table
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
+            $table->unsignedInteger('user_id')->nullable()->index(); // Use unsignedInteger for SQLite
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             $table->longText('payload');
