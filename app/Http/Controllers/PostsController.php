@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 
 class PostsController extends Controller
 {
@@ -26,6 +27,9 @@ class PostsController extends Controller
                 'title' => $validated['title'],
                 'content' => $validated['content'],
             ]);
+
+            // Clear index cache
+            Cache::tags(['posts_index'])->flush();
 
             return response()->json(['message' => 'Post created successfully', 'post' => $post], 201);
         } catch (Exception $e) {
@@ -54,7 +58,12 @@ class PostsController extends Controller
                 });
             }
 
-            return response()->json($query->latest()->get());
+            $cacheKey = 'posts_index_' . md5(serialize($request->query()));
+            $posts = Cache::tags(['posts_index'])->remember($cacheKey, 3600, function () use ($query) {
+                return $query->latest()->get();
+            });
+
+            return response()->json($posts);
         } catch (Exception $e) {
             return response()->json(['message' => 'Error fetching posts', 'error' => $e->getMessage()], 500);
         }
@@ -65,8 +74,12 @@ class PostsController extends Controller
     {
         try {
             $request->validate(['post_id' => 'required|exists:posts,id']);
+            $postId = $request->post_id;
 
-            $post = Post::findOrFail($request->post_id);
+            $post = Cache::tags(['post_' . $postId])->remember('post_' . $postId, 3600, function () use ($postId) {
+                return Post::findOrFail($postId);
+            });
+
             return response()->json($post);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Post not found'], 404);
@@ -94,6 +107,10 @@ class PostsController extends Controller
 
             $post->update($request->only(['title', 'content', 'category_id']));
 
+            // Clear relevant caches
+            Cache::tags(['posts_index'])->flush();
+            Cache::tags(['post_' . $post->id])->flush();
+
             return response()->json(['message' => 'Post updated successfully', 'post' => $post]);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Post not found'], 404);
@@ -115,6 +132,10 @@ class PostsController extends Controller
             }
 
             $post->delete();
+
+            // Clear relevant caches
+            Cache::tags(['posts_index'])->flush();
+            Cache::tags(['post_' . $post->id])->flush();
 
             return response()->json(['message' => 'Post deleted successfully']);
         } catch (ModelNotFoundException $e) {
