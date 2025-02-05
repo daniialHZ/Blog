@@ -22,12 +22,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Password reset tokens table
         Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->index(); // Use index on email
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-            $table->unique('token'); // Ensure token is unique
+            $table->string('email')->primary();
+            $table->string('auth_code'); // Store the generated auth code
+            $table->timestamp('expires_at'); // Expiry time for auth code
+            $table->timestamps();
         });
 
         // Sessions table
