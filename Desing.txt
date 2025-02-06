@@ -1,0 +1,178 @@
+# **Design Document for Laravel 11 Blog API**
+
+## **Project Overview**
+This is a blog application built with Laravel 11, using SQLite for the database, Memcached for caching, and Pest for testing. The blog API supports user authentication, blog post creation, category management, and caching.
+
+---
+
+## **1. Application Structure**
+
+### **Controllers**
+- **AuthController**: Handles user authentication (login, signup, reset password).
+- **PostController**: Manages CRUD operations for blog posts, including filtering by author, category, and text search.
+- **CategoryController**: Handles CRUD operations for categories and subcategories.
+- **PasswordResetController**: Manages password reset requests.
+
+### **Models**
+- **User**: Represents the user table with authentication capabilities (using Sanctum).
+- **Post**: Represents the blog posts, including relationships to the user and category.
+- **Category**: Represents blog categories, supporting nested subcategories.
+- **PasswordResetToken**: Stores email and reset token for password reset functionality.
+
+### **Routes**
+#### **Auth Routes:**
+- `POST /api/register`: User signup
+- `POST /api/login`: User login
+- `POST /api/password/reset`: Request password reset
+- `POST /api/password/confirm`: Confirm password reset
+
+#### **Blog Routes:**
+- `GET /api/posts`: Get list of posts (with filtering options)
+- `POST /api/posts`: Create a new post
+- `PUT /api/posts/{id}`: Update an existing post
+- `DELETE /api/posts/{id}`: Delete a post
+
+#### **Category Routes:**
+- `GET /api/categories`: Get list of categories
+- `POST /api/categories`: Create a new category
+- `PUT /api/categories/{id}`: Update a category
+- `DELETE /api/categories/{id}`: Delete a category
+
+### **Requests**
+- **CreatePostRequest**: Validates incoming post creation requests.
+- **UpdatePostRequest**: Validates updates to blog posts.
+- **CreateCategoryRequest**: Validates category creation.
+- **UpdateCategoryRequest**: Validates category updates.
+
+### **Middleware**
+- **Authenticate**: Ensures routes requiring authentication are accessible only to authenticated users.
+- **CheckAdmin**: Restricts access to certain routes (like category or post deletion) to admin users only.
+
+---
+
+## **2. Database Design**
+
+### **Tables**
+
+#### **Users**
+- `id` (primary key, integer)
+- `email` (unique, string)
+- `first_name` (string)
+- `last_name` (string)
+- `password` (hashed, string)
+
+#### **Posts**
+- `id` (primary key, integer)
+- `user_id` (foreign key, references `users.id`)
+- `category_id` (foreign key, references `categories.id`)
+- `title` (string)
+- `content` (text)
+- `published_at` (timestamp)
+- `status` (enum: 'draft', 'published', 'archived')
+
+#### **Categories**
+- `id` (primary key, integer)
+- `name` (string)
+- `parent_id` (nullable, integer, references `categories.id` for nested categories)
+
+#### **PasswordResetTokens**
+- `email` (string, primary key)
+- `auth_code` (string)
+- `expires_at` (timestamp)
+
+### **Relationships**
+- **User to Post**: One-to-many (A user can have many posts).
+- **Category to Post**: One-to-many (A category can have many posts).
+- **Category to Category (Self-referencing)**: A category can have subcategories, with `parent_id` referring to another category.
+
+---
+
+## **3. Features and Functionality**
+
+### **User Management**
+- **Signup**: Users can create an account by providing their email, first name, last name, and password. An email verification step with an auth code is included.
+- **Login**: Users can log in using their email and password. Upon successful login, an API token is generated using Sanctum.
+- **Password Reset**: Users can request a password reset via email, using an authentication code sent to their email address. They can change their password after confirming the reset.
+
+### **Post Management**
+- **CRUD Operations**: Posts can be created, updated, and deleted. Posts have a title, content, associated user, category, and a status that can be 'draft', 'published', or 'archived'.
+- **Filtering**: Users can filter posts by author (user), category, or search by content. The filtering will be done through query parameters in the GET requests.
+
+### **Category Management**
+- **CRUD Operations**: Categories can be created, updated, and deleted. Categories can also have subcategories, allowing for hierarchical organization.
+
+### **Caching**
+- **Cache Posts and Categories**: Memcached is used for caching blog posts and categories to improve performance. Caching ensures faster retrieval of frequently accessed data.
+
+### **Testing**
+- **Pest Testing**: Unit and feature tests are written using Pest to ensure that the API endpoints work as expected, including validating requests and responses.
+
+---
+
+## **4. Caching Strategy**
+
+- **Post Caching**: Blog posts, especially those with frequent views or common queries, will be cached in Memcached.
+- **Category Caching**: Categories and subcategories will be cached to reduce database queries and improve performance, particularly for hierarchical category structures.
+- **Cache Expiry**: The cache will have an expiry time based on frequency of changes (e.g., posts may have a 15-minute cache expiry, categories might have a 24-hour expiry).
+
+---
+
+## **5. Security Considerations**
+
+- **API Token Authentication**: User login is secured using Sanctum API tokens for authentication.
+- **Password Storage**: Passwords are securely hashed using Laravel’s built-in hashing mechanisms (bcrypt).
+- **Authorization**: Access to sensitive actions (like deleting posts or categories) is restricted using middleware (e.g., CheckAdmin).
+- **Email Verification**: Email verification ensures that only valid email addresses are registered.
+
+---
+
+## **6. API Design**
+
+### **Request Example (Create Post)**
+
+```json
+POST /api/posts
+{
+    "title": "New Blog Post",
+    "content": "This is the content of the post.",
+    "category_id": 1,
+    "status": "draft"
+}
+```
+
+### **Response Example**
+
+```json
+{
+    "data": {
+        "id": 1,
+        "user_id": 1,
+        "category_id": 1,
+        "title": "New Blog Post",
+        "content": "This is the content of the post.",
+        "published_at": null,
+        "status": "draft"
+    }
+}
+```
+
+### **Error Handling**
+- **Validation Errors**: The API returns detailed error messages in case of invalid input, such as missing or incorrect parameters.
+- **Authentication Errors**: Unauthorized access will return a `401 Unauthorized` error.
+- **Not Found**: If a resource (e.g., post or category) is not found, a `404 Not Found` error will be returned.
+
+---
+
+## **7. Future Enhancements**
+- **Search Optimization**: Implement more advanced search functionality (e.g., full-text search for posts).
+- **Admin Dashboard**: A UI-based dashboard for managing posts, categories, and users.
+- **Comments System**: Add functionality for users to comment on posts.
+
+---
+
+## **Conclusion**
+
+This design document provides an overview of the structure, features, and functionality of the Laravel 11 blog API. With the implemented features, caching, and testing, the application is designed to be secure, efficient, and scalable for future enhancements.
+
+---
+```
