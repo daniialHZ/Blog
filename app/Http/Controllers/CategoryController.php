@@ -128,7 +128,7 @@ class CategoryController extends Controller
                 Cache::tags(['category_' . $parentId])->flush();
             }
 
-            return response()->json(['message' => 'Category deleted successfully']);
+            return response()->json(['message' => 'Category deleted successfully'], 200);
         } catch (ModelNotFoundException $e) {
             return response()->json(['message' => 'Category not found'], 404);
         } catch (Exception $e) {
