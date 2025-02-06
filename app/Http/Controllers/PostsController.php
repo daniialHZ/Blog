@@ -24,18 +24,19 @@ class PostsController extends Controller
                 'status' => 'required|in:draft,published,scheduled,archived'
             ]);
 
-            $status = $validated['status'] ?? 'draft';
-            if (!isset($validated['status']) && isset($validated['published_at'])) {
+            $status = $validated['status'];
+
+            if (isset($validated['published_at'])) {
                 $publishDate = Carbon::parse($validated['published_at']);
                 $status = $publishDate->isFuture() ? 'scheduled' : 'published';
             }
 
             $post = Post::create([
                 'user_id' => Auth::id(),
-                'category_id' => $validated['category_id'],
+                'category_id' => $validated['category_id'] ?? null,
                 'title' => $validated['title'],
                 'content' => $validated['content'],
-                'published_at' => $validated['published_at'],
+                'published_at' => $validated['published_at'] ?? null,
                 'status' => $status
             ]);
 
@@ -75,7 +76,7 @@ class PostsController extends Controller
 
             $cacheKey = 'posts_index_' . md5(serialize($request->query()));
             $posts = Cache::tags(['posts_index'])->remember($cacheKey, 3600, function () use ($query) {
-                return $query->with(['user', 'category'])
+                return $query->with(['author', 'category'])
                     ->orderBy('published_at', 'desc')
                     ->paginate(15);
             });
