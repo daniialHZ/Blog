@@ -10,7 +10,12 @@ use Illuminate\Support\Facades\Cache;
 
 class CategoryController extends Controller
 {
-    // 1️⃣ Create a new category
+    /**
+     * Store a newly created category.
+     *
+     * @param StoreCategoryRequest $request The validated request data.
+     * @return JsonResponse The created category.
+     */
     public function store(Request $request)
     {
         try {
@@ -36,7 +41,11 @@ class CategoryController extends Controller
         }
     }
 
-    // 2️⃣ Get all categories (with nested subcategories)
+    /**
+     * Display a list of categories.
+     *
+     * @return JsonResponse The list of categories.
+     */
     public function index()
     {
         try {
@@ -50,7 +59,12 @@ class CategoryController extends Controller
         }
     }
 
-    // 3️⃣ Show a specific category (with subcategories)
+    /**
+     * Display the specified category.
+     *
+     * @param Category $category The category instance.
+     * @return JsonResponse The category details.
+     */
     public function show(Request $request)
     {
         try {
@@ -69,7 +83,13 @@ class CategoryController extends Controller
         }
     }
 
-    // 4️⃣ Update a category
+    /**
+     * Update an existing category.
+     *
+     * @param UpdateCategoryRequest $request The validated request data.
+     * @param Category $category The category instance.
+     * @return JsonResponse The updated category.
+     */
     public function update(Request $request)
     {
         try {
@@ -109,7 +129,12 @@ class CategoryController extends Controller
         }
     }
 
-    // 5️⃣ Delete a category (and its subcategories)
+    /**
+     * Remove the specified category.
+     *
+     * @param Category $category The category instance.
+     * @return JsonResponse A confirmation message.
+     */
     public function destroy(Request $request)
     {
         try {

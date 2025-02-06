@@ -12,7 +12,12 @@ use Illuminate\Support\Facades\Cache;
 
 class PostsController extends Controller
 {
-    // 1️⃣ Create a new post
+    /**
+     * Store a newly created post.
+     *
+     * @param StorePostRequest $request The validated request data.
+     * @return JsonResponse The created post.
+     */
     public function store(Request $request)
     {
         try {
@@ -48,7 +53,17 @@ class PostsController extends Controller
         }
     }
 
-    // 2️⃣ Get all posts (with filters)
+    /**
+     * Display a listing of posts with optional filters.
+     *
+     * Available filters:
+     * - `author_id`: Filter by author's ID.
+     * - `category_id`: Filter by category.
+     * - `search`: Filter by title or content.
+     *
+     * @param Request $request The incoming HTTP request.
+     * @return JsonResponse The filtered list of posts.
+     */
     public function index(Request $request)
     {
         try {
@@ -87,7 +102,12 @@ class PostsController extends Controller
         }
     }
 
-    // 3️⃣ Show a single post
+    /**
+     * Display the specified post.
+     *
+     * @param Post $post The post instance to display.
+     * @return JsonResponse The post details.
+     */
     public function show(Request $request)
     {
         try {
@@ -106,7 +126,13 @@ class PostsController extends Controller
         }
     }
 
-    // 4️⃣ Update a post
+    /**
+     * Update an existing post.
+     *
+     * @param UpdatePostRequest $request The validated request data.
+     * @param Post $post The post instance to update.
+     * @return JsonResponse The updated post.
+     */
     public function update(Request $request)
     {
         try {
@@ -138,7 +164,12 @@ class PostsController extends Controller
         }
     }
 
-    // 5️⃣ Delete a post
+    /**
+     * Remove the specified post.
+     *
+     * @param Post $post The post instance to delete.
+     * @return JsonResponse A confirmation message.
+     */
     public function destroy(Request $request)
     {
         try {
